@@ -43,26 +43,33 @@ function App() {
   };
 
   const handleDateSelect = async (d: string) => {
+    // Transition to success screen immediately or after a short delay for better UX
+    // since Google Apps Script responses can be slow or opaque (CORS)
+    const transition = () => setStep(5);
+
     try {
       const sheetUrl = import.meta.env.VITE_GOOGLE_SHEET_URL;
       
-      if (!sheetUrl) {
-        console.warn('Google Sheet URL not configured. Check your .env file.');
-        // Fallback to local for dev if needed, or just proceed to success for demo
-        setStep(5);
+      if (!sheetUrl || sheetUrl.includes('REPLACE_WITH_YOUR_URL')) {
+        console.warn('Google Sheet URL not configured correctly.');
+        transition();
         return;
       }
 
-      await fetch(sheetUrl, {
+      // We use a background fetch. We don't await it strictly to avoid hanging the UI
+      // if the network is slow or redirect is opaque.
+      fetch(sheetUrl, {
         method: 'POST',
-        mode: 'no-cors', // Google Apps Script requires no-cors for simple POSTs from browser
-        headers: { 'Content-Type': 'application/json' },
+        mode: 'no-cors', 
+        headers: { 'Content-Type': 'text/plain' }, // Using text/plain for no-cors compatibility
         body: JSON.stringify({ name, email, choice, subChoice, date: d })
-      });
-      setStep(5);
+      }).catch(err => console.error('Submission error:', err));
+
+      // Small delay to ensure the request is dispatched before screen changes
+      setTimeout(transition, 500);
     } catch (err) {
-      console.error('Error saving data:', err);
-      setStep(5);
+      console.error('Error in handleDateSelect:', err);
+      transition();
     }
   };
 
