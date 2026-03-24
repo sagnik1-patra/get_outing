@@ -70,6 +70,21 @@ export default function Admin() {
     });
   }
 
+  const deleteResponse = async (timestamp: string) => {
+    if (!window.confirm("Are you sure you want to delete this entry?")) return;
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({ action: "deleteResponse", timestamp })
+      });
+      // Update local state
+      setResponses(prev => prev.filter(r => r.timestamp !== timestamp));
+    } catch (err) {
+      alert("Error deleting entry.");
+    }
+  };
+
   const saveConfig = async () => {
     try {
       // POST to Apps Script doesn't return data in no-cors mode, 
@@ -195,6 +210,7 @@ export default function Admin() {
                   <th style={{ padding: "18px", textAlign: "left", color: "#ffd700" }}>Diet</th>
                   <th style={{ padding: "18px", textAlign: "left", color: "#ffd700" }}>Chosen Date</th>
                   <th style={{ padding: "18px", textAlign: "left", color: "#ffd700" }}>Timestamp</th>
+                  <th style={{ padding: "18px", textAlign: "left", color: "#ffd700" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -205,6 +221,14 @@ export default function Admin() {
                     <td style={{ padding: "18px" }}>{r.foodType}</td>
                     <td style={{ padding: "18px", color: '#60a5fa' }}>{r.date}</td>
                     <td style={{ padding: "18px", opacity: 0.6 }}>{new Date(r.timestamp).toLocaleString()}</td>
+                    <td style={{ padding: "18px" }}>
+                        <button 
+                            onClick={() => deleteResponse(r.timestamp)}
+                            style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+                        >
+                            Delete
+                        </button>
+                    </td>
                   </tr>
                 ))}
                 {responses.length === 0 && (

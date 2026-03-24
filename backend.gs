@@ -50,15 +50,36 @@ function doPost(e) {
   if (action === "submitResponse") {
     const sheet = getOrCreateSheet(ss, RESPONSES_SHEET_NAME);
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["name", "outing", "foodType", "timestamp"]);
+      sheet.appendRow(["name", "outing", "foodType", "date", "timestamp"]);
     }
     sheet.appendRow([
       postData.name,
       postData.outing,
       postData.foodType,
+      postData.date,
       new Date().toISOString()
     ]);
     return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (action === "deleteResponse") {
+    const sheet = getOrCreateSheet(ss, RESPONSES_SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+    const timestampToDelete = postData.timestamp;
+    
+    // Find the header index for timestamp
+    const headers = data[0];
+    const tsIndex = headers.indexOf("timestamp");
+    
+    if (tsIndex !== -1) {
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][tsIndex].toString() === timestampToDelete.toString()) {
+          sheet.deleteRow(i + 1);
+          return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({error: "Entry not found"})).setMimeType(ContentService.MimeType.JSON);
   }
 
   return ContentService.createTextOutput(JSON.stringify({error: "Invalid action"})).setMimeType(ContentService.MimeType.JSON);
