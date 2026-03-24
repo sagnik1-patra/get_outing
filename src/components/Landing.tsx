@@ -21,7 +21,7 @@ export default function Landing({ onNext }: LandingProps) {
       initial={{ opacity: 0, scale: 0.9, rotateY: -15 }}
       animate={{ opacity: 1, scale: 1, rotateY: 0 }}
       exit={{ opacity: 0, scale: 1.1, rotateY: 15 }}
-      transition={{ duration: 0.8, type: 'spring' }}
+      transition={{ duration: 0.5, type: 'spring' }}
       className="element-3d"
       style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
     >

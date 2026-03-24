@@ -105,12 +105,12 @@ body {
 }
 
 .card-3d {
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.3s ease-out;
   transform-style: preserve-3d;
 }
 
 .card-3d:hover {
-  transform: rotateY(8deg) rotateX(8deg) scale(1.02);
+  transform: rotateY(4deg) rotateX(4deg) scale(1.01);
 }
 
 /* Waterpark Animations */
