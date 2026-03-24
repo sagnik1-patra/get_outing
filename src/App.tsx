@@ -1,21 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import Landing from './components/Landing.tsx';
-import ChoiceSelector from './components/ChoiceSelector.tsx';
-import Waterpark from './components/Waterpark.tsx';
-import Dinner from './components/Dinner.tsx';
-import DateSelector from './components/DateSelector.tsx';
-import Success from './components/Success.tsx';
+import Landing from './components/Landing';
+import ChoiceSelector from './components/ChoiceSelector';
+import PlanDetails from './components/PlanDetails';
+import DateSelector from './components/DateSelector';
+import Success from './components/Success';
+import Admin from './components/Admin';
 
-export type Choice = 'Waterpark' | 'Dinner' | null;
+export type Choice = string | null;
 export type SubChoice = 'Veg' | 'Non-Veg' | null;
 
-function App() {
+function OutingFlow() {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [choice, setChoice] = useState<Choice>(null);
   const [subChoice, setSubChoice] = useState<SubChoice>(null);
+  const [config, setConfig] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SHEET_URL;
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        if (!GOOGLE_SCRIPT_URL) {
+            setLoading(false);
+            return;
+        }
+        const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getConfig`);
+        const data = await res.json();
+        setConfig(data);
+      } catch (err) {
+        console.error("Failed to load config", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchConfig();
+  }, [GOOGLE_SCRIPT_URL]);
 
   const handleLandingNext = (n: string, e: string) => {
     setName(n);
@@ -25,53 +49,49 @@ function App() {
 
   const handleChoiceSelect = (c: Choice) => {
     setChoice(c);
-    if (c === 'Waterpark') {
-      setStep(2);
-    } else {
-      setStep(3);
-    }
+    setStep(2); // Generic plan details step
   };
 
-  const handleWaterparkNext = () => {
-    setSubChoice(null);
-    setStep(4);
-  };
-
-  const handleDinnerNext = (sc: SubChoice) => {
+  const handleSubNext = (sc: SubChoice) => {
     setSubChoice(sc);
-    setStep(4);
+    setStep(3); // Date selection step
   };
 
   const handleDateSelect = async (d: string) => {
-    // Transition to success screen immediately or after a short delay for better UX
-    // since Google Apps Script responses can be slow or opaque (CORS)
-    const transition = () => setStep(5);
-
+    const transition = () => setStep(4);
     try {
-      const sheetUrl = import.meta.env.VITE_GOOGLE_SHEET_URL;
-      
-      if (!sheetUrl || sheetUrl.includes('REPLACE_WITH_YOUR_URL')) {
-        console.warn('Google Sheet URL not configured correctly.');
+      if (!GOOGLE_SCRIPT_URL) {
         transition();
         return;
       }
 
-      // We use a background fetch. We don't await it strictly to avoid hanging the UI
-      // if the network is slow or redirect is opaque.
-      fetch(sheetUrl, {
+      fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors', 
-        headers: { 'Content-Type': 'text/plain' }, // Using text/plain for no-cors compatibility
-        body: JSON.stringify({ name, email, choice, subChoice, date: d })
+        body: JSON.stringify({ 
+            action: "submitResponse",
+            name, 
+            email, 
+            outing: choice, 
+            foodType: subChoice, 
+            date: d 
+        })
       }).catch(err => console.error('Submission error:', err));
 
-      // Small delay to ensure the request is dispatched before screen changes
       setTimeout(transition, 500);
     } catch (err) {
       console.error('Error in handleDateSelect:', err);
       transition();
     }
   };
+
+  if (loading) return (
+    <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#0a0a0a' }}>
+        <h2 className="title" style={{color: '#ffd700'}}>Preparing Your Journey...</h2>
+    </div>
+  );
+
+  const planOptions = config ? Object.keys(config) : ["Waterpark", "Dinner"];
 
   return (
     <>
@@ -81,14 +101,36 @@ function App() {
 
       <AnimatePresence mode="wait">
         {step === 0 && <Landing key="landing" onNext={handleLandingNext} />}
-        {step === 1 && <ChoiceSelector key="choice" onSelect={handleChoiceSelect} />}
-        {step === 2 && <Waterpark key="waterpark" onNext={handleWaterparkNext} />}
-        {step === 3 && <Dinner key="dinner" onNext={handleDinnerNext} />}
-        {step === 4 && <DateSelector key="date" onNext={handleDateSelect} />}
-        {step === 5 && <Success key="success" />}
+        {step === 1 && (
+            <ChoiceSelector 
+                key="choice" 
+                onSelect={handleChoiceSelect} 
+                options={planOptions}
+            />
+        )}
+        {step === 2 && (
+            <PlanDetails 
+                key="plan-details" 
+                title={choice || "My Adventure"}
+                images={config?.[choice || ""]}
+                onNext={handleSubNext} 
+            />
+        )}
+        {step === 3 && <DateSelector key="date" onNext={handleDateSelect} />}
+        {step === 4 && <Success key="success" />}
       </AnimatePresence>
     </>
   );
 }
 
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<OutingFlow />} />
+      <Route path="/admin" element={<Admin />} />
+    </Routes>
+  );
+}
+
 export default App;
+
