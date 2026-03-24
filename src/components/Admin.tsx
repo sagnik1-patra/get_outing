@@ -90,10 +90,10 @@ export default function Admin() {
         alert("No responses yet.");
         return;
     }
-    const headers = ["Name", "Outing Plan", "Food Type", "Timestamp"];
+    const headers = ["Name", "Outing Plan", "Food Type", "Chosen Date", "Timestamp"];
     const csvContent = [
       headers.join(","),
-      ...responses.map((r: any) => `"${r.name}","${r.outing}","${r.foodType}","${r.timestamp}"`)
+      ...responses.map((r: any) => `"${r.name}","${r.outing}","${r.foodType}","${r.date}","${r.timestamp}"`)
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -193,6 +193,7 @@ export default function Admin() {
                   <th style={{ padding: "18px", textAlign: "left", color: "#ffd700" }}>Name</th>
                   <th style={{ padding: "18px", textAlign: "left", color: "#ffd700" }}>Plan</th>
                   <th style={{ padding: "18px", textAlign: "left", color: "#ffd700" }}>Diet</th>
+                  <th style={{ padding: "18px", textAlign: "left", color: "#ffd700" }}>Chosen Date</th>
                   <th style={{ padding: "18px", textAlign: "left", color: "#ffd700" }}>Timestamp</th>
                 </tr>
               </thead>
@@ -202,6 +203,7 @@ export default function Admin() {
                     <td style={{ padding: "18px" }}>{r.name}</td>
                     <td style={{ padding: "18px" }}>{r.outing}</td>
                     <td style={{ padding: "18px" }}>{r.foodType}</td>
+                    <td style={{ padding: "18px", color: '#60a5fa' }}>{r.date}</td>
                     <td style={{ padding: "18px", opacity: 0.6 }}>{new Date(r.timestamp).toLocaleString()}</td>
                   </tr>
                 ))}
