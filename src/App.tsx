@@ -91,7 +91,7 @@ function OutingFlow() {
     </div>
   );
 
-  const planOptions = config ? Object.keys(config) : ["Waterpark", "Dinner"];
+  const planOptions = (config && Object.keys(config).length > 0) ? Object.keys(config) : ["Waterpark", "Dinner"];
 
   return (
     <>
